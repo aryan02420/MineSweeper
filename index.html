@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>MineSweeper</title>
+  <link rel="icon" type="image/png" href="/images/icon.png">
+  <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<body>
+  <script defer src="p5.js"></script>
+  <script defer src="sketch.js"></script>
+  <script defer>
+    setTimeout(() => {
+      document.querySelector('#defaultCanvas0').addEventListener('contextmenu', e => {
+        e.preventDefault();
+      });
+    }, 1000);
+  </script>
+
+</body>
+
+</html>
