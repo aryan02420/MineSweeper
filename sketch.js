@@ -1,24 +1,16 @@
-function randInt(min, max) {
-  min = Math.ceil(min);
-  max = Math.floor(max);
-  return Math.floor(Math.random() * (max - min + 1)) + min; //both inclusive
-}
-let xsize = randInt(3, 6);
-let ysize = randInt(3, 6);
-let total = xsize * ysize;
-let mines = Math.floor(total / 7);
-let gameboard = new Array(total);
-let gamestate = new Array(total);
-let pg, maskImg, tileImg, mineImg, flagImg, explImg, diffImg, wrngImg;
-let num0Img, num1Img, num2Img, num3Img, num4Img, num5Img, numImg, num7Img, num8Img;
-let size = Math.min(window.innerWidth, window.innerHeight) / (xsize + ysize) * 2;
-let margin = 1.03;
-let root3 = Math.sqrt(3);
-let _x = root3 * 0.82 * ((xsize / 2) - (ysize / 2)) * size / 3 * margin;
-let _y = ((xsize / 2) + (ysize / 2)) * size / 3 * margin;
-let gameover = false;
+let xsize, ysize, total, mines;                                                 // dimensions of board, no. of tiles, no. of mines
+let gameboard;                                                                  // gameboard contsins info about tiles(mines, numbers of neighbors)
+let gamestate;                                                                  // gamestate tracks intraction with tiles (0=no interaction, 1=clicked, 2=flagged)
+let pg;                                                                         // stores hitboxes
+let maskImg, tileImg, mineImg, flagImg, explImg, diffImg, wrngImg, num0Img;     // images
+let num1Img, num2Img, num3Img, num4Img, num5Img, numImg, num7Img, num8Img;      // images
+let size, _x, _y;                                                               // size of tiles. origin point of canvas
+let margin = 1.03;                                                              // spacing between tiles
+let root3 = Math.sqrt(3);                                                       // 1.7320...
+let gameover;                                                                   // true if you win or tap mine`
+let touchTime;                                                                  // measure duration of touch on mobile devices
 
-function preload() {
+function preload() {                                                            // preload images
   maskImg = loadImage('images/mask.png');
   tileImg = loadImage('images/tile.png');
   mineImg = loadImage('images/mine.png');
@@ -37,60 +29,84 @@ function preload() {
   num8Img = loadImage('images/num8.png');
 }
 
-function setup() {
-  createCanvas(windowWidth, windowHeight);
-  hitbox();
-  gameboard = gameboard.fill('0');
-  gamestate = gamestate.fill('0');
-  generateMines();
-  putNumbers();
+function setup() {                                                              // ran once
+  createCanvas(windowWidth, windowHeight);                                      // make a canvas
+  reset();                                                                      // initialize game
 }
 
 function reset() {
-  xsize = randInt(3, 6);
-  ysize = randInt(3, 6);
-  total = xsize * ysize;
-  mines = Math.floor(total / 7);
+  xsize = randInt(3, 6);                                                        // no of tiles in x direction
+  ysize = randInt(3, 6);                                                        // no of tiles in y direction
+  total = xsize * ysize;                                                        // total number of tiles
+  mines = Math.floor(total / 7);                                                // total number of mines
   gameboard = new Array(total);
   gamestate = new Array(total);
-  size = Math.min(window.innerWidth, window.innerHeight) / (xsize + ysize) * 2;
-  margin = 1.03;
-  root3 = Math.sqrt(3);
-  _x = root3 * 0.82 * ((xsize / 2) - (ysize / 2)) * size / 3 * margin;
-  _y = ((xsize / 2) + (ysize / 2)) * size / 3 * margin;
-  gameover = false;
-  hitbox();
-  gameboard = gameboard.fill('0');
-  gamestate = gamestate.fill('0');
-  generateMines();
-  putNumbers();
-  draw();
+  size = Math.min(window.innerWidth, window.innerHeight) / (xsize + ysize) * 2; // size of one tile
+  _x = root3 * 0.82 * ((xsize / 2) - (ysize / 2)) * size / 3 * margin;          // shift in origin in x direction
+  _y = ((xsize / 2) + (ysize / 2)) * size / 3 * margin;                         // shift in origin in y direction
+  gameover = false;                                                             // game not over
+  hitbox();                                                                     // calculate hitbox
+  gameboard = gameboard.fill('0');                                              // all tiles are 0
+  gamestate = gamestate.fill('0');                                              // all tiles can be interacted with
+  generateMines();                                                              // put mines in gameboard
+  putNumbers();                                                                 // put numbers in gameboard
+  draw();                                                                       // draw the game
 }
 
-function windowResized() {
+function windowResized() {                                                      // responsive design :)
   resizeCanvas(windowWidth, windowHeight);
   size = Math.min(window.innerWidth, window.innerHeight) / (xsize + ysize) * 2;
   _x = root3 * 0.82 * ((xsize / 2) - (ysize / 2)) * size / 3 * margin;
   _y = ((xsize / 2) + (ysize / 2)) * size / 3 * margin;
+  hitbox();
+}
+
+function touchStarted() {
+  touchTime = parseInt(Date.now());                                             // on mobile devices, store time when touched
+}
+
+function touchEnded() {
+  touchTime = parseInt(Date.now()) - touchTime;                                 // duration of touch
+  if (mouseX < 0 || mouseX > width || mouseY < 0 || mouseY > height)  {         // if clicked outside canvas
+     return true;                                                               // do not preventDefault
+  }
+  if (gameover) {                                                               // if gameover
+    reset();                                                                    // reset game
+    return false;                                                               // preventDefault
+  }
+  let tileIndex = getTile();                                                    // which tile was tapped?
+  if (tileIndex === false) return false;                                        // if no tile tapped, exit
+  if (touchTime >= 10 && touchTime < 250) {                                     // on shortpress
+    openTile(tileIndex);                                                        // open the tile`
+    return false;
+  }
+  if (touchTime >= 250 && touchTime < 3000) {                                   // on longpress
+    flagTile(tileIndex);                                                        // flag the tile
+    return false;
+  }
+  return false;                                                                 // if nothing, preventDefault
 }
 
 function mouseReleased() {
-  if (mouseX < 0 || mouseX > width || mouseY < 0 || mouseY > height) return true;
-  if (gameover) {
-    reset();
+  if (mouseX < 0 || mouseX > width || mouseY < 0 || mouseY > height) {          // if clicked outside canvas
+     return true;                                                               // do not preventDefault
+  }
+  if (event.type === 'touchend') return false;                                  // if touch input receieved, ABORT!!
+  if (gameover) {                                                               // if gameover
+    reset();                                                                    // reset game
+    return false;                                                               // preventDefault
+  }
+  let tileIndex = getTile();                                                    // which tile was tapped?
+  if (tileIndex === false) return false;                                        // if no tile tapped, exit
+  if (event.button === 2) {                                                     // if right click
+    flagTile(tileIndex);                                                        // flag the tile
     return false;
   }
-  let tileIndex = getTile();
-  if (tileIndex === false) return false;
-  if (event.button === 2) {
-    flagTile(tileIndex);
+  if (event.button === 0) {                                                     // if left click
+    openTile(tileIndex);                                                        // open tile
     return false;
   }
-  if (event.button === 0) {
-    openTile(tileIndex);
-    return false;
-  }
-  return false;
+  return false;                                                                 // if nothing, preventDefault
 }
 
 function draw() {
@@ -143,36 +159,42 @@ function draw() {
   noLoop();
 }
 
-function hitbox() {
-  pg = createGraphics(width, height);
-  pg.background(0, 0, 255);
-  pg.translate((width / 2 - size / 2) - _x, (height / 2 - size * 0.75 * 0.1) - _y);
-  for (let i = 0; i < (total); i++) {
-    let offx = i % xsize * size / 3 * margin;
-    let offy = Math.floor(i / xsize) * size / 3 * margin;
-    pg.tint(i % xsize, Math.floor(i / xsize), 0);
-    pg.image(maskImg, root3 * 0.82 * (offx - offy), 1 * (offx + offy), size, size * 0.75);
+function randInt(min, max) {                                                    // generate random integer between min and max both inclusive
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function hitbox() {                                                             // stores hitboxes of tiles in a graphic object which is an off-screen canvas
+  pg = createGraphics(width, height);                                           // create an off-screen canvas
+  pg.background(0, 0, 255);                                                     // make it blue
+  pg.translate((width / 2 - size / 2) - _x, (height / 2 - size * 0.75 * 0.1) - _y); // set the origin point so everything stays centered
+  for (let i = 0; i < (total); i++) {                                           // for each tile
+    let offx = i % xsize * size / 3 * margin;                                   // cartesian x offset
+    let offy = Math.floor(i / xsize) * size / 3 * margin;                       // cartesian y offset
+    pg.tint(i % xsize, Math.floor(i / xsize), 0);                               // color the tile
+    pg.image(maskImg, root3 * 0.82 * (offx - offy), 1 * (offx + offy), size, size * 0.75);// draw the tile
   }
 }
 
 function generateMines() {
   let m = mines;
   while (m > 0 && m <= total) {
-    let tile = Math.floor(Math.random() * (total));
-    if (gameboard[tile] != 'm') {
-      gameboard[tile] = 'm';
+    let tile = Math.floor(Math.random() * (total));                             // random position to put mine on
+    if (gameboard[tile] != 'm') {                                               // if not already a mine
+      gameboard[tile] = 'm';                                                    // make it a mine
       m--;
     }
   }
 }
 
 function calcMines(i) {
-  let m = 0;
-  leftExists = i % xsize != 0;
+  let m = 0;                                                                    // start with zero surrounding mines
+  leftExists = i % xsize != 0;                                                  // check which neighbors exist
   rightExists = i % xsize != xsize - 1;
   topExists = i >= xsize;
   bottomExists = i < total - xsize;
-  if (leftExists) m += (gameboard[i - 1] === 'm');
+  if (leftExists) m += (gameboard[i - 1] === 'm');                              // if neighbor is a mine add one to m
   if (rightExists) m += (gameboard[i + 1] === 'm');
   if (topExists) m += (gameboard[i - xsize] === 'm');
   if (bottomExists) m += (gameboard[i + xsize] === 'm');
@@ -180,41 +202,43 @@ function calcMines(i) {
   if (rightExists && topExists) m += (gameboard[i - xsize + 1] === 'm');
   if (leftExists && bottomExists) m += (gameboard[i + xsize - 1] === 'm');
   if (rightExists && bottomExists) m += (gameboard[i + xsize + 1] === 'm');
-  return m;
+  return m;                                                                     // return number of surrounding mines
 }
 
 function putNumbers() {
   for (let i = 0; i < (total); i++) {
-    let numofMines = calcMines(i)
-    gameboard[i] = numofMines === 0 || gameboard[i] === 'm' ? gameboard[i] : calcMines(i).toString();
+    let numofMines = calcMines(i)                                               // how many tiless surround current tile
+    if (gameboard[i] !== 'm') {                                                 // if current tile is not a mine
+      gameboard[i] = numofMines.toString();                                     // put the number
+    }
   }
 }
 
-function isodraw(img, x, y) {}
+function isodraw(img, x, y) {}                                                  // TODO: move every single image call here
 
-function printBoard(board) {
+function printBoard(board) {                                                    // for debugging, outputs to console
   for (let i = 0; i < (ysize); i++) {
     console.log(board.slice(0 + i * xsize, (i + 1) * xsize).join(' '));
   }
 }
 
-function getTile() {
-  let c = pg.get(mouseX, mouseY);
-  let i = c[0] + c[1] * xsize;
-  if (c[2] === 255) return false;
-  return i;
+function getTile() {                                                            // GENIUS part
+  let c = pg.get(mouseX, mouseY);                                               // pick color from off screen canvas
+  if (c[2] === 255) return false;                                               // if background color picked return false
+  let i = c[0] + c[1] * xsize;                                                  // calculate index of tile
+  return i;                                                                     // return index of tile
 }
 
 function openTile(i) {
-  if (gamestate[i] === '0') {
-    let leftExists = (i % xsize) > 0;
+  if (gamestate[i] === '0') {                                                   // if not opened before
+    let leftExists = (i % xsize) > 0;                                           // check which neighbor exist
     let rightExists = (i % xsize) < xsize - 1;
     let topExists = i >= xsize;
     let bottomExists = i < total - xsize;
-    gamestate[i] = '1';
-    if (gameboard[i] === '0') {
-      setTimeout(() => {
-        if (leftExists && gamestate[i - 1] === '0') openTile(i - 1);
+    gamestate[i] = '1';                                                         // open the tile
+    if (gameboard[i] === '0') {                                                 // if current tile was empty
+      setTimeout(() => {                                                        // RECURSION. YAY!
+        if (leftExists && gamestate[i - 1] === '0') openTile(i - 1);            // open neighboring tiles if they exist and can be opened
         if (rightExists && gamestate[i + 1] === '0') openTile(i + 1);
         if (topExists && gamestate[i - xsize] === '0') openTile(i - xsize);
         if (bottomExists && gamestate[i + xsize] === '0') openTile(i + xsize);
@@ -223,28 +247,28 @@ function openTile(i) {
         if (leftExists && bottomExists && gamestate[i - 1 + xsize] === '0') openTile(i - 1 + xsize);
         if (rightExists && bottomExists && gamestate[i + 1 + xsize] === '0') openTile(i + 1 + xsize);
       }, 100);
-    } else if (gameboard[i] === 'm') {
-      gameover = true;
+    } else if (gameboard[i] === 'm') {                                          // oops it was a mine
+      gameover = true;                                                          // GAMEOVER
     }
   }
   draw();
 }
 
 function flagTile(i) {
-  const s = gamestate[i];
-  if (s === '0') {
-    gamestate[i] = '2';
-  } else if (s === '2') {
-    gamestate[i] = '0';
+  const s = gamestate[i];                                                       // get current state of tile
+  if (s === '0') {                                                              // if untouched
+    gamestate[i] = '2';                                                         // flag it
+  } else if (s === '2') {                                                       // if flagged
+    gamestate[i] = '0';                                                         // remove it
   }
   draw();
 }
 
 function checkWin() {
   for (let i = 0; i < (total); i++) {
-    if (gamestate[i] === '2' && gameboard[i] !== 'm') return false;
-    if (gameboard[i] === 'm' && gamestate[i] !== '2') return false;
-    if (gamestate[i] === '0') return false;
+    if (gamestate[i] === '2' && gameboard[i] !== 'm') return false;             // if wrongly flagged
+    if (gameboard[i] === 'm' && gamestate[i] !== '2') return false;             // if mine not flagged
+    if (gamestate[i] === '0') return false;                                     // if tile has not been touched`
   }
-  return true;
+  return true;                                                                  // congratz
 }
