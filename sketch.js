@@ -4,13 +4,15 @@ let gamestate;                                                                  
 let pg;                                                                         // stores hitboxes
 let maskImg, tileImg, mineImg, flagImg, explImg, diffImg, wrngImg, num0Img;     // images
 let num1Img, num2Img, num3Img, num4Img, num5Img, numImg, num7Img, num8Img;      // images
+let numImgs;                                                                    // list for storing all numbered images
+let openSfx, flagSfx, winSfx, explodeSfx                                        // sound effects
 let size, _x, _y;                                                               // size of tiles. origin point of canvas
 let margin = 1.03;                                                              // spacing between tiles
 let root3 = Math.sqrt(3);                                                       // 1.7320...
 let gameover;                                                                   // true if you win or tap mine`
 let touchTime;                                                                  // measure duration of touch on mobile devices
 
-function preload() {                                                            // preload images
+function preload() {                                                            // preload images and sounds
   maskImg = loadImage('images/mask.png');
   tileImg = loadImage('images/tile.png');
   mineImg = loadImage('images/mine.png');
@@ -27,6 +29,12 @@ function preload() {                                                            
   num6Img = loadImage('images/num6.png');
   num7Img = loadImage('images/num7.png');
   num8Img = loadImage('images/num8.png');
+  soundFormats('wav');
+  winSfx = loadSound('sfx/win');
+  openSfx = loadSound('sfx/open');
+  flagSfx = loadSound('sfx/flag');
+  explodeSfx = loadSound('sfx/explode');
+  numImgs = [num0Img, num1Img, num2Img, num3Img, num4Img, num5Img, num6Img, num7Img, num8Img];
 }
 
 function setup() {                                                              // ran once
@@ -41,7 +49,7 @@ function reset() {
   mines = Math.floor(total / 7);                                                // total number of mines
   gameboard = new Array(total);
   gamestate = new Array(total);
-  size = Math.min(window.innerWidth, window.innerHeight) / (xsize + ysize) * 2; // size of one tile
+  size = Math.min(window.innerWidth, window.innerHeight) / ((xsize + ysize) * margin / 2); // size of one tile
   _x = root3 * 0.82 * ((xsize / 2) - (ysize / 2)) * size / 3 * margin;          // shift in origin in x direction
   _y = ((xsize / 2) + (ysize / 2)) * size / 3 * margin;                         // shift in origin in y direction
   gameover = false;                                                             // game not over
@@ -59,6 +67,7 @@ function windowResized() {                                                      
   _x = root3 * 0.82 * ((xsize / 2) - (ysize / 2)) * size / 3 * margin;
   _y = ((xsize / 2) + (ysize / 2)) * size / 3 * margin;
   hitbox();
+  draw();
 }
 
 function touchStarted() {
@@ -76,7 +85,7 @@ function touchEnded() {
   }
   let tileIndex = getTile();                                                    // which tile was tapped?
   if (tileIndex === false) return false;                                        // if no tile tapped, exit
-  if (touchTime >= 10 && touchTime < 250) {                                     // on shortpress
+  if (touchTime >= 0 && touchTime < 250) {                                      // on shortpress
     openTile(tileIndex);                                                        // open the tile`
     return false;
   }
@@ -112,48 +121,25 @@ function mouseReleased() {
 function draw() {
   background(245);
   push();
-  translate((width / 2 - size / 2) - _x, (height / 2 - size * 0.75 * 0.1) - _y);
-  for (let i = 0; i < (total); i++) {
-    let offx = i % xsize * size / 3 * margin;
-    let offy = Math.floor(i / xsize) * size / 3 * margin;
-    image(tileImg, root3 * 0.82 * (offx - offy), 1 * (offx + offy), size, size * 0.75);
-    if (!gameover && gamestate[i] === '1') {
-      let Img;
-      if (gameboard[i] === '0') Img = num0Img;
-      else if (gameboard[i] === '1') Img = num1Img;
-      else if (gameboard[i] === '2') Img = num2Img;
-      else if (gameboard[i] === '3') Img = num3Img;
-      else if (gameboard[i] === '4') Img = num4Img;
-      else if (gameboard[i] === '5') Img = num5Img;
-      else if (gameboard[i] === '6') Img = num6Img;
-      else if (gameboard[i] === '7') Img = num7Img;
-      else if (gameboard[i] === '8') Img = num8Img;
-      image(Img, root3 * 0.82 * (offx - offy), 1 * (offx + offy), size, size * 0.75);
-    } else if (!gameover && gamestate[i] === '2') {
-      image(flagImg, root3 * 0.82 * (offx - offy), 1 * (offx + offy), size, size * 0.75);
-    } else if (gameover) {
-      if (gameboard[i] === 'm' && gamestate[i] === '2') image(diffImg, root3 * 0.82 * (offx - offy), 1 * (offx + offy), size, size * 0.75);
-      else if (gameboard[i] === 'm' && gamestate[i] === '1') image(explImg, root3 * 0.82 * (offx - offy), 1 * (offx + offy), size, size * 0.75);
-      else if (gameboard[i] === 'm' && gamestate[i] === '0') image(mineImg, root3 * 0.82 * (offx - offy), 1 * (offx + offy), size, size * 0.75);
-      else if (gameboard[i] !== 'm' && gamestate[i] === '2') image(wrngImg, root3 * 0.82 * (offx - offy), 1 * (offx + offy), size, size * 0.75);
-      else if (gamestate[i] === '1') {
-        let Img;
-        if (gameboard[i] === '0') Img = num0Img;
-        else if (gameboard[i] === '1') Img = num1Img;
-        else if (gameboard[i] === '2') Img = num2Img;
-        else if (gameboard[i] === '3') Img = num3Img;
-        else if (gameboard[i] === '4') Img = num4Img;
-        else if (gameboard[i] === '5') Img = num5Img;
-        else if (gameboard[i] === '6') Img = num6Img;
-        else if (gameboard[i] === '7') Img = num7Img;
-        else if (gameboard[i] === '8') Img = num8Img;
-        image(Img, root3 * 0.82 * (offx - offy), 1 * (offx + offy), size, size * 0.75);
-      }
+  translate((width / 2 - size / 2) - _x, (height / 2 - size * 0.75 * 0.1) - _y);// set origin point on canvas
+  for (let i = 0; i < (total); i++) {                                           // loop over all tiles
+    isodraw(tileImg, i);                                                        // draw empty tile
+    if (!gameover && gamestate[i] === '1') {                                    // if game is not over and tile is opened
+      isodraw(numImgs[parseInt(gameboard[i])], i);                              // draw the numbered flag
+    } else if (!gameover && gamestate[i] === '2') {                             // if game is not over and tile is flagged
+      isodraw(flagImg, i);                                                      // draw flag
+    } else if (gameover) {                                                      // if gameover
+      if (gameboard[i] === 'm' && gamestate[i] === '2') isodraw(diffImg, i);    // if mine flagged
+      else if (gameboard[i] === 'm' && gamestate[i] === '1') isodraw(explImg, i);// if mine detonated
+      else if (gameboard[i] === 'm' && gamestate[i] === '0') isodraw(mineImg, i);// if mine unexplored
+      else if (gameboard[i] !== 'm' && gamestate[i] === '2') isodraw(wrngImg, i);// if wrongly flagged
+      else if (gamestate[i] === '1') isodraw(numImgs[parseInt(gameboard[i])], i);// draw remaining open tile
     }
   }
   pop();
-  if (!gameover && checkWin()) {
+  if (!gameover && checkWin()) {                                                // check if you win
     gameover = true;
+    winSfx.play();
     draw();
   }
   noLoop();
@@ -214,7 +200,11 @@ function putNumbers() {
   }
 }
 
-function isodraw(img, x, y) {}                                                  // TODO: move every single image call here
+function isodraw(img, i) {
+  let offx = i % xsize * size / 3 * margin;                                   // cartesian x offset
+  let offy = Math.floor(i / xsize) * size / 3 * margin;                       // cartesian y offset`
+  image(img, root3 * 0.82 * (offx - offy), 1 * (offx + offy), size, size * 0.75);// empty tile
+}
 
 function printBoard(board) {                                                    // for debugging, outputs to console
   for (let i = 0; i < (ysize); i++) {
@@ -249,9 +239,11 @@ function openTile(i) {
       }, 100);
     } else if (gameboard[i] === 'm') {                                          // oops it was a mine
       gameover = true;                                                          // GAMEOVER
+      explodeSfx.play();
     }
+    openSfx.play();
+    draw();
   }
-  draw();
 }
 
 function flagTile(i) {
@@ -261,6 +253,7 @@ function flagTile(i) {
   } else if (s === '2') {                                                       // if flagged
     gamestate[i] = '0';                                                         // remove it
   }
+  flagSfx.play();
   draw();
 }
 
