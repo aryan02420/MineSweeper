@@ -1,0 +1,22 @@
+{
+  "name": "minesweeper",
+  "version": "1.0.0",
+  "description": "",
+  "main": "sketch.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aryan02420/MineSweeper.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/aryan02420/MineSweeper/issues"
+  },
+  "homepage": "https://github.com/aryan02420/MineSweeper#readme",
+  "devDependencies": {
+    "typescript": "^4.3.5"
+  }
+}

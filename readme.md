@@ -1,5 +1,5 @@
-### ![Logo](/images/logo.png)
+### ![Logo](./demo/images/logo.png)
 
 
 
-![Preview](/images/preview.png)
+![Preview](./demo/images/preview.png)
