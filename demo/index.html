@@ -1,25 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>MineSweeper</title>
+    <link rel="icon" type="image/png" href="images/icon.png" />
+    <link rel="stylesheet" type="text/css" href="style.css" />
+  </head>
 
-<head>
-  <meta charset="utf-8">
-  <title>MineSweeper</title>
-  <link rel="icon" type="image/png" href="images/icon.png">
-  <link rel="stylesheet" type="text/css" href="style.css">
-</head>
-
-<body>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.1.9/p5.min.js" integrity="sha512-WIklPM6qPCIp6d3fSSr90j+1unQHUOoWDS4sdTiR8gxUTnyZ8S2Mr8e10sKKJ/bhJgpAa/qG068RDkg6fIlNFA==" crossorigin="anonymous"></script>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.1.9/addons/p5.sound.js" integrity="sha512-KxzVm+IqxNNq0+SzT/zzd5PHxY4LPrN+v5gZJ6+JKqjeU3Cr4y/djAg5eNlKDWurn1SeKZpql/yeOMWblMSzOg==" crossorigin="anonymous"></script>
-  <script defer src="sketch.js"></script>
-  <div id="game"></div>
-  <leaderboard></leaderboard>
-  <template id="productrow">
-  <tr>
-    <td class="record"></td>
-    <td></td>
-  </tr>
-</template>
-</body>
-
+  <body>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.1.9/p5.min.js" integrity="sha512-WIklPM6qPCIp6d3fSSr90j+1unQHUOoWDS4sdTiR8gxUTnyZ8S2Mr8e10sKKJ/bhJgpAa/qG068RDkg6fIlNFA==" crossorigin="anonymous"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.1.9/addons/p5.sound.js" integrity="sha512-KxzVm+IqxNNq0+SzT/zzd5PHxY4LPrN+v5gZJ6+JKqjeU3Cr4y/djAg5eNlKDWurn1SeKZpql/yeOMWblMSzOg==" crossorigin="anonymous"></script>
+    <!-- <script defer src="../dist/minesweeper.js"></script> -->
+    <script defer src="./sketch.js"></script>
+    <script defer src="./Leaderboard.js"></script>
+    <div id="game"></div>
+    <leader-board>
+      <leader-board-item data-score="123" data-rank="0">NULL</leader-board-item>
+      <leader-board-item data-score="92" data-rank="1">DUMDUM</leader-board-item>
+      <leader-board-item data-score="46" data-rank="2">PRO</leader-board-item>
+      <leader-board-item data-score="12" data-rank="26">YOU</leader-board-item>
+    </leader-board>
+    <template id="leader-board-template">
+      <div>
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 2rem;">
+          <span>Leaderboard</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" class="" fill="currentColor">
+            <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div>
+          <slot></slot>
+        </div>
+      </div>
+    </template>
+    <template id="leader-board-item-template">
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 2rem;">
+        <span class="rank">#</span>
+        <span class="name"><slot>-</slot></span>
+        <span class="score">-</span>
+      </div>
+    </template>
+  </body>
 </html>

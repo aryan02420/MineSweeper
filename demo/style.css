@@ -6,3 +6,18 @@ html, body {
 canvas {
   display: block;
 }
+
+leader-board {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0.5rem;
+  border-bottom-left-radius: 8px;
+  background-color: #00000066;
+  color: white;
+  backdrop-filter: blur(4px);
+}
+
+leader-board leader-board-item {
+  margin-bottom: 10%;
+}
