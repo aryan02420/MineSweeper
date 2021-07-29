@@ -2,4 +2,4 @@
 
 
 
-![Preview](./demo/images/preview.png)
+[![Preview](./demo/images/preview2.png)](https://aryan02420.github.io/MineSweeper/demo)
